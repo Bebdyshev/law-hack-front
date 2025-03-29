@@ -1,90 +1,56 @@
-import axios from "axios"
-import AsyncStorage from "@react-native-async-storage/async-storage"
+import axios from 'axios';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Create axios instance with base URL
+// Создаем и настраиваем axios instance
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:3000",
+  // Для мобильных устройств нужен IP-адрес, а не localhost
+  baseURL: 'http://192.168.0.1:3000', // ИЗМЕНИТЕ НА ВАШ IP-АДРЕС!!!
   headers: {
     "Content-Type": "application/json",
   },
-})
+  timeout: 10000, // Таймаут в 10 секунд
+});
 
-// Add request interceptor to add auth token to requests
+// Логирование запросов
 axiosInstance.interceptors.request.use(
   async (config) => {
-    const token = await AsyncStorage.getItem("auth_token")
+    console.log('REQUEST:', config.method?.toUpperCase(), config.url);
+    console.log('REQUEST DATA:', config.data);
+    
+    const token = await AsyncStorage.getItem('auth_token');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+      config.headers['Authorization'] = `${token}`;
+      console.log('TOKEN ATTACHED');
     }
-    return config
+    return config;
   },
   (error) => {
-    return Promise.reject(error)
-  },
-)
+    console.log('REQUEST ERROR:', error);
+    return Promise.reject(error);
+  }
+);
 
-// Add response interceptor to handle errors
+// Логирование ответов
 axiosInstance.interceptors.response.use(
   (response) => {
-    return response
+    console.log('RESPONSE:', response.status, response.config.url);
+    console.log('RESPONSE DATA:', response.data);
+    return response;
   },
-  async (error) => {
-    const originalRequest = error.config
-
-    // Handle 401 errors (unauthorized)
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true
-
-      // Clear token and redirect to login
-      await AsyncStorage.removeItem("auth_token")
-      // Navigation will be handled by the auth context
-
-      return Promise.reject(error)
+  (error) => {
+    console.log('RESPONSE ERROR:', error.message);
+    if (error.response) {
+      console.log('ERROR STATUS:', error.response.status);
+      console.log('ERROR DATA:', error.response.data);
     }
+    return Promise.reject(error);
+  }
+);
 
-    return Promise.reject(error)
-  },
-)
-
-// API endpoints
-export const api = {
-  // Auth
-  login: (phoneNumber: string, code: string | null, region: string, city: string) =>
-    axiosInstance.post("/auth/login", { phoneNumber, code, region, city }),
-
-  // Chat
-  initChat: () => axiosInstance.post("/chat/init"),
-  sendMessage: (chatId: string, message: string | null, type: "text" | "image" | "video", mediaUrl?: string) =>
-    axiosInstance.post("/chat/message", { chatId, message, type, mediaUrl }),
-  getChatHistory: (chatId: string) => axiosInstance.get(`/chat/history/${chatId}`),
-
-  // Reports
-  submitReport: (reportData: {
-    title: string
-    location: {
-      coordinates: [number, number]
-      region: string
-      city: string
-    }
-    body: string
-    time: string
-    mediaUrls?: string[]
-  }) => axiosInstance.post("/report/report", reportData),
-
-  // Admin
-  getAdminChats: () => axiosInstance.get("/admin/chats"),
-  terminateChat: (chatId: string) => axiosInstance.delete(`/admin/chats/${chatId}`),
-  createAnnouncement: (data: {
-    title: string
-    body: string
-    media?: string[]
-    region: string
-    city: string
-  }) => axiosInstance.post("/admin/announcement", data),
-  getAnnouncements: () => axiosInstance.get("/admin/announcements"),
-  getReports: () => axiosInstance.get("/admin/reports"),
-  closeReport: (reportId: string) => axiosInstance.post(`/admin/reports/${reportId}/close`),
+// API endpoints for auth
+export const login = (phoneNumber: string, code: string | null, region: string, city: string) => {
+  console.log('CALLING LOGIN API with:', { phoneNumber, code, region, city });
+  return axiosInstance.post("/auth/login", { phoneNumber, code, region, city });
 }
 
-export default axiosInstance
-
+export default axiosInstance;

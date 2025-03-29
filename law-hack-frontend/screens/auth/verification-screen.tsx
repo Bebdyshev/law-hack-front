@@ -10,7 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 const VerificationScreen = () => {
   const route = useRoute<any>()
   const navigation = useNavigation()
-  const { login } = useAuth()
+  const { login, requestVerificationCode } = useAuth()
   const { colors } = useTheme()
 
   const { phoneNumber, region, city } = route.params
@@ -59,16 +59,23 @@ const VerificationScreen = () => {
     }
   }
 
-  const handleResendCode = () => {
+  const handleResendCode = async () => {
     if (!canResend) return
 
     // Reset timer and resend state
     setTimer(60)
     setCanResend(false)
-
-    // Request new code
-    // In a real app, you would call an API endpoint here
-    Alert.alert("Code Resent", "A new verification code has been sent to your phone.")
+    
+    try {
+      // Запрашиваем новый код через API
+      await requestVerificationCode(phoneNumber, region, city)
+      Alert.alert("Code Resent", "A new verification code has been sent to your phone.")
+    } catch (error) {
+      console.error("Error resending verification code:", error)
+      Alert.alert("Error", "Failed to resend verification code. Please try again.")
+      setCanResend(true)
+      return
+    }
 
     // Start timer again
     const interval = setInterval(() => {
@@ -101,7 +108,7 @@ const VerificationScreen = () => {
         <Text style={[styles.title, { color: colors.text }]}>Verification Code</Text>
 
         <Text style={[styles.description, { color: colors.text }]}>
-          We've sent a 4-digit verification code to {phoneNumber}
+          We've sent a 4-digit verification code to {"+7" + phoneNumber}
         </Text>
 
         <View style={styles.codeContainer}>

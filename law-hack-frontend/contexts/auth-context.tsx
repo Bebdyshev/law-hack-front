@@ -3,7 +3,7 @@
 import type React from "react"
 import { createContext, useState, useContext, useEffect } from "react"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { api } from "../lib/axios-instance"
+import { login } from "../lib/axios-instance"
 
 type AuthContextType = {
   isAuthenticated: boolean
@@ -11,7 +11,7 @@ type AuthContextType = {
   userRole: string | null
   login: (phoneNumber: string, code: string | null, region: string, city: string) => Promise<void>
   logout: () => Promise<void>
-  requestVerificationCode: (phoneNumber: string) => Promise<void>
+  requestVerificationCode: (phoneNumber: string, region: string, city: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -51,21 +51,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuthStatus()
   }, [])
 
-  const login = async (phoneNumber: string, code: string | null, region: string, city: string) => {
+  const loginUser = async (phoneNumber: string, code: string | null, region: string, city: string) => {
+    console.log('Login attempt with:', { phoneNumber, code, region, city });
     try {
-      const response = await api.login(phoneNumber, code, region, city)
+      const response = await login(phoneNumber, code, region, city);
+      console.log('Login response received:', response.data);
 
       if (response.data) {
-        // Store auth token (assuming your API returns a token)
-        await AsyncStorage.setItem("auth_token", response.data.token || "dummy-token")
-        await AsyncStorage.setItem("user_role", response.data.role || "user")
+        // Store auth token
+        await AsyncStorage.setItem("auth_token", response.data.token || "dummy-token");
+        await AsyncStorage.setItem("user_role", response.data.role || "user");
+        console.log('Auth tokens stored, role:', response.data.role || "user");
 
-        setIsAuthenticated(true)
-        setUserRole(response.data.role || "user")
+        setIsAuthenticated(true);
+        setUserRole(response.data.role || "user");
       }
-    } catch (error) {
-      console.error("Login error:", error)
-      throw error
+    } catch (error: any) {
+      console.error("Login error:", error.message);
+      console.error("Full error:", error);
+      throw error;
     }
   }
 
@@ -80,11 +84,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
-  const requestVerificationCode = async (phoneNumber: string) => {
-    // In a real app, you would call an API endpoint to request a verification code
-    // For this example, we'll just simulate it
-    console.log(`Requesting verification code for ${phoneNumber}`)
-    // The actual verification code would be sent via SMS in a real app
+  const requestVerificationCode = async (phoneNumber: string, region: string, city: string) => {
+    console.log('Requesting verification code for:', { phoneNumber, region, city });
+    try {
+      // Вызываем API для запроса кода верификации
+      const response = await login(phoneNumber, null, region, city);
+      console.log('Verification code request successful:', response.data);
+    } catch (error: any) {
+      console.error("Error requesting verification code:", error.message);
+      console.error("Full error:", error);
+      throw error;
+    }
   }
 
   return (
@@ -93,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated,
         isLoading,
         userRole,
-        login,
+        login: loginUser,
         logout,
         requestVerificationCode,
       }}

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import React from "react"
 import {
   View,
   Text,
@@ -43,7 +44,11 @@ const regions = [
   "West Kazakhstan",
 ]
 
-const cities = {
+type Region = typeof regions[number]
+type City = string
+type Cities = Record<Region, City[]>
+
+const cities: Cities = {
   Almaty: ["Almaty"],
   "Nur-Sultan": ["Nur-Sultan"],
   Shymkent: ["Shymkent"],
@@ -73,8 +78,8 @@ const LoginScreen = () => {
   const { colors, isDarkMode } = useTheme()
 
   const [phoneNumber, setPhoneNumber] = useState("")
-  const [region, setRegion] = useState(regions[0])
-  const [city, setCity] = useState(cities[regions[0]][0])
+  const [region, setRegion] = useState<Region>(regions[0])
+  const [city, setCity] = useState<City>(cities[regions[0]][0])
   const [isLoading, setIsLoading] = useState(false)
   const [isPhoneValid, setIsPhoneValid] = useState(true)
 
@@ -94,9 +99,15 @@ const LoginScreen = () => {
 
     setIsLoading(true)
     try {
-      await requestVerificationCode(phoneNumber)
+      // Форматируем номер телефона в международном формате для Казахстана
+      const formattedPhone = "+7" + phoneNumber
+      
+      // Используем API из axios-instance для отправки запроса
+      await requestVerificationCode(formattedPhone, region, city)
+      
+      // После успешной отправки кода переходим на экран верификации
       navigation.navigate("Verification", {
-        phoneNumber,
+        phoneNumber: formattedPhone,
         region,
         city,
       })
@@ -143,13 +154,16 @@ const LoginScreen = () => {
                   },
                 ]}
               >
+                <View style={styles.inputIconContainer}>
+                  <Ionicons name="call" size={20} color={colors.text} />
+                </View>
                 <Text style={[styles.phonePrefix, { color: colors.text }]}>+7</Text>
                 <TextInput
                   style={[styles.phoneInput, { color: colors.text }]}
                   placeholder="(XXX) XXX XXXX"
                   placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
                   keyboardType="phone-pad"
-                  value={formatPhoneForDisplay(phoneNumber).substring(3)} // Remove the +7 prefix
+                  value={formatPhoneForDisplay(phoneNumber).substring(3)}
                   onChangeText={handlePhoneChange}
                   maxLength={15}
                 />
@@ -174,7 +188,7 @@ const LoginScreen = () => {
               >
                 <Picker
                   selectedValue={region}
-                  onValueChange={(itemValue) => {
+                  onValueChange={(itemValue: Region) => {
                     setRegion(itemValue)
                     setCity(cities[itemValue][0])
                   }}
@@ -201,7 +215,7 @@ const LoginScreen = () => {
               >
                 <Picker
                   selectedValue={city}
-                  onValueChange={setCity}
+                  onValueChange={(itemValue: City) => setCity(itemValue)}
                   style={{ color: colors.text }}
                   dropdownIconColor={colors.text}
                 >
@@ -324,6 +338,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
   },
+  inputIconContainer: {
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRightWidth: 1,
+    borderRightColor: '#E5E7EB',
+  },
   phoneInputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -336,12 +357,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 16,
     fontWeight: "500",
+    borderLeftWidth: 1,
+    borderLeftColor: '#E5E7EB',
   },
   phoneInput: {
     flex: 1,
     height: "100%",
     fontSize: 16,
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
   },
   errorText: {
     fontSize: 12,
