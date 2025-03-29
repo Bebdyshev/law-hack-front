@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // Создаем и настраиваем axios instance
 const axiosInstance = axios.create({
   // Для мобильных устройств нужен IP-адрес, а не localhost
-  baseURL: 'http://192.168.0.1:3000', // ИЗМЕНИТЕ НА ВАШ IP-АДРЕС!!!
+  baseURL: 'http://127.0.0.1:3000', // ИЗМЕНИТЕ НА ВАШ IP-АДРЕС!!!
   headers: {
     "Content-Type": "application/json",
   },

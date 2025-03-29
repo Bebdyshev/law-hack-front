@@ -21,7 +21,7 @@ import * as ImagePicker from "expo-image-picker"
 import * as Location from "expo-location"
 import MapView, { Marker } from "react-native-maps"
 import { SafeAreaView } from "react-native-safe-area-context"
-
+import axios from "axios"
 type Message = {
   id: string
   content: string
@@ -52,31 +52,9 @@ const ChatDetailScreen = () => {
     try {
       // In a real app, you would fetch chat history from the API
       // For this example, we'll use mock data
-      const mockMessages: Message[] = [
-        {
-          id: "1",
-          content: "Hello! How can I help you today?",
-          type: "text",
-          sender: "other",
-          timestamp: new Date(Date.now() - 1000 * 60 * 10).toISOString(), // 10 minutes ago
-        },
-        {
-          id: "2",
-          content: "I need information about filing a report.",
-          type: "text",
-          sender: "user",
-          timestamp: new Date(Date.now() - 1000 * 60 * 9).toISOString(), // 9 minutes ago
-        },
-        {
-          id: "3",
-          content: "Sure, I can help with that. What kind of report would you like to file?",
-          type: "text",
-          sender: "other",
-          timestamp: new Date(Date.now() - 1000 * 60 * 8).toISOString(), // 8 minutes ago
-        },
-      ]
+      const messages = await axios.get('http://127.0.0.1:3000/chat/history/'+chatId)
 
-      setMessages(mockMessages)
+      setMessages((messages as any).history)
     } catch (error) {
       console.error("Error fetching chat history:", error)
     } finally {
@@ -112,6 +90,15 @@ const ChatDetailScreen = () => {
         location,
       }
 
+      const response = axios.post("http://127.0.0.1:3000/chat/message", {
+        chatId,
+        message: content,
+        type: "text",
+        mediaUrl
+      })
+
+      const responseMessage= (await response).data.response
+
       setMessages((prevMessages) => [...prevMessages, newMessage])
 
       // Clear input after sending text message
@@ -124,23 +111,7 @@ const ChatDetailScreen = () => {
 
       // Simulate response from server
       setTimeout(() => {
-        let responseContent = ""
-
-        if (type === "text") {
-          responseContent = "Thank you for your message. Our team will get back to you shortly."
-        } else if (type === "image") {
-          responseContent = "Thank you for sharing this image. We have received it."
-        } else if (type === "location") {
-          responseContent = "Thank you for sharing your location. We have recorded it."
-        }
-
-        const responseMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: responseContent,
-          type: "text",
-          sender: "other",
-          timestamp: new Date().toISOString(),
-        }
+        
 
         setMessages((prevMessages) => [...prevMessages, responseMessage])
       }, 1000)

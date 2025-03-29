@@ -20,7 +20,7 @@ const VerificationScreen = () => {
   const [canResend, setCanResend] = useState(false)
 
   const inputRefs = useRef<Array<TextInput | null>>([])
-  const [codeDigits, setCodeDigits] = useState(["", "", "", ""])
+  const [codeDigits, setCodeDigits] = useState(["", "", "", "", "", ""])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -42,8 +42,8 @@ const VerificationScreen = () => {
   }, [codeDigits])
 
   const handleVerify = async () => {
-    if (code.length !== 4) {
-      Alert.alert("Invalid Code", "Please enter a valid 4-digit verification code")
+    if (code.length !== 6) {
+      Alert.alert("Invalid Code", "Please enter a valid 6-digit verification code")
       return
     }
 
@@ -97,7 +97,7 @@ const VerificationScreen = () => {
     setCodeDigits(newCodeDigits)
 
     // Auto-focus next input if a digit was entered
-    if (text && index < 3) {
+    if (text && index < 5) {
       inputRefs.current[index + 1]?.focus()
     }
   }
@@ -108,7 +108,7 @@ const VerificationScreen = () => {
         <Text style={[styles.title, { color: colors.text }]}>Verification Code</Text>
 
         <Text style={[styles.description, { color: colors.text }]}>
-          We've sent a 4-digit verification code to {"+7" + phoneNumber}
+          We've sent a 6-digit verification code to {phoneNumber}
         </Text>
 
         <View style={styles.codeContainer}>
@@ -142,10 +142,10 @@ const VerificationScreen = () => {
           style={[
             styles.verifyButton,
             { backgroundColor: colors.primary },
-            (isLoading || code.length !== 4) && styles.disabledButton,
+            (isLoading || code.length !== 6) && styles.disabledButton,
           ]}
           onPress={handleVerify}
-          disabled={isLoading || code.length !== 4}
+          disabled={isLoading || code.length !== 6}
         >
           {isLoading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.verifyButtonText}>Verify</Text>}
         </TouchableOpacity>

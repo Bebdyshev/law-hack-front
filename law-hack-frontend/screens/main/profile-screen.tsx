@@ -45,9 +45,9 @@ const ProfileScreen = () => {
             <Text style={styles.avatarText}>JD</Text>
           </View>
 
-          <Text style={[styles.profileName, { color: colors.text }]}>John Doe</Text>
+          <Text style={[styles.profileName, { color: colors.text }]}>Alikhan Baglanov</Text>
 
-          <Text style={[styles.profilePhone, { color: colors.text }]}>+1 234 567 8900</Text>
+          <Text style={[styles.profilePhone, { color: colors.text }]}>+7 706 658 7862</Text>
         </View>
 
         <View style={styles.settingsSection}>

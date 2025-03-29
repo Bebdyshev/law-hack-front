@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import { useTheme } from "../../contexts/theme-context"
-import { api } from "../../lib/axios-instance"
 import { Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
+import axios from "axios"
 
 type Chat = {
   id: string
@@ -27,28 +27,9 @@ const ChatsScreen = () => {
     try {
       // In a real app, you would fetch chats from the API
       // For this example, we'll use mock data
-      const mockChats: Chat[] = [
-        {
-          id: "1",
-          lastMessage: "Hello, how can I help you today?",
-          timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 minutes ago
-          unreadCount: 0,
-        },
-        {
-          id: "2",
-          lastMessage: "Your report has been received.",
-          timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1 hour ago
-          unreadCount: 2,
-        },
-        {
-          id: "3",
-          lastMessage: "Thank you for your feedback!",
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-          unreadCount: 0,
-        },
-      ]
+      
 
-      setChats(mockChats)
+      setChats([])
     } catch (error) {
       console.error("Error fetching chats:", error)
     } finally {
@@ -68,7 +49,7 @@ const ChatsScreen = () => {
 
   const handleCreateNewChat = async () => {
     try {
-      const response = await api.initChat()
+      const response = await axios.post("http://localhost:3000/chat/init")
       const chatId = response.data.chatId
 
       navigation.navigate("ChatDetail", {
@@ -77,6 +58,23 @@ const ChatsScreen = () => {
       })
     } catch (error) {
       console.error("Error creating new chat:", error)
+      Alert.alert("Error", "Failed to create a new chat. Please try again.")
+    }
+  }
+
+  const sendMessage = async (chatId: string, message: string, type: "text" | "image", mediaUrl?: string) => {
+    try {
+      const response = await axios.post("http://localhost:3000/chat/message", {
+        chatId,
+        message,
+        type,
+        mediaUrl,
+      })
+      const serverResponse = response.data.response // Extract the response from the server
+      console.log("Message sent successfully:", serverResponse)
+    } catch (error) {
+      console.error("Error sending message:", error)
+      Alert.alert("Error", "Failed to send the message. Please try again.")
     }
   }
 
